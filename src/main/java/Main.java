@@ -39,7 +39,7 @@ import static java.util.concurrent.TimeUnit.MINUTES;
  */
 public class Main {
     private static final String host = System.getProperty("host", "localhost");
-    private static final boolean yield = Boolean.parseBoolean(System.getProperty("yield", "false"));
+    private static final boolean yield = System.getProperties().containsKey("yield");
 
     public static void main(final String[] args) throws InterruptedException, IOException {
         final int[] sizes = new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 20, 24, 28, 32, 48, 64, 96, 128, 192, 256};
