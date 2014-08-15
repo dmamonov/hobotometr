@@ -33,36 +33,38 @@ import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
 /**
+ * -Xms1024m -Xmx1024m -verbose:gc -XX:+UseG1GC -Dhost=linux.env
  * @author dmitry.mamonov
  *         Created: 2014-08-13 11:24 PM
  */
 public class Main {
     private static final String host = System.getProperty("host", "localhost");
+    private static final boolean yield = Boolean.parseBoolean(System.getProperty("yield", "false"));
 
     public static void main(final String[] args) throws InterruptedException, IOException {
         final int[] sizes = new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 20, 24, 28, 32, 48, 64, 96, 128, 192, 256};
         for(final int size:sizes) {
             for(final DatabaseType databaseType: new DatabaseType[]{DatabaseType.postgres, DatabaseType.mysql, DatabaseType.mongo}) {
-                runTestSuite(DatabaseType.mongo, new int[]{size}, true);
+                if (System.getProperties().containsKey(databaseType.name())) {
+                    runTestSuite(databaseType, new int[]{size}, Boolean.parseBoolean(System.getProperty("insert.only","false")));
+                }
             }
         }
         System.out.println("All Done");
     }
 
-    private static void runTestSuite(final DatabaseType databaseType, final int[] sizes, final boolean runAllTests) throws InterruptedException, IOException {
+    private static void runTestSuite(final DatabaseType databaseType, final int[] sizes, final boolean insertOnly) throws InterruptedException, IOException {
         for (final int maxPoolSize : sizes) { //test inserts:
-            if (runAllTests || true) {
-                runTest(new TestConfig.Builder()
-                                .setDatabaseType(databaseType)
-                                .setSharedPoolSize(maxPoolSize)
-                                .setWriteInsertThreads(maxPoolSize)
-                                .build()
-                );
-            }
+            runTest(new TestConfig.Builder()
+                            .setDatabaseType(databaseType)
+                            .setSharedPoolSize(maxPoolSize)
+                            .setWriteInsertThreads(maxPoolSize)
+                            .build()
+            );
         }
 
         for (final int maxPoolSize : sizes) { //test update tiny:
-            if (runAllTests || true) {
+            if (!insertOnly) {
                 runTest(new TestConfig.Builder()
                                 .setDatabaseType(databaseType)
                                 .setSharedPoolSize(maxPoolSize)
@@ -73,7 +75,7 @@ public class Main {
         }
 
         for (final int maxPoolSize : sizes) { //test update wide:
-            if (runAllTests || true) {
+            if (!insertOnly) {
                 runTest(new TestConfig.Builder()
                                 .setDatabaseType(databaseType)
                                 .setSharedPoolSize(maxPoolSize)
@@ -84,7 +86,7 @@ public class Main {
         }
 
         for (final int maxPoolSize : sizes) { //test select lite:
-            if (runAllTests) {
+            if (!insertOnly) {
                 runTest(new TestConfig.Builder()
                                 .setDatabaseType(databaseType)
                                 .setSharedPoolSize(maxPoolSize)
@@ -95,7 +97,7 @@ public class Main {
         }
 
         for (final int maxPoolSize : sizes) { //test select heavy:
-            if (runAllTests) {
+            if (!insertOnly) {
                 runTest(new TestConfig.Builder()
                                 .setDatabaseType(databaseType)
                                 .setSharedPoolSize(maxPoolSize)
@@ -106,7 +108,7 @@ public class Main {
         }
 
         for (final int maxPoolSize : sizes) { //test select tiny, insert:
-            if (runAllTests) {
+            if (!insertOnly) {
                 runTest(new TestConfig.Builder()
                                 .setDatabaseType(databaseType)
                                 .setSharedPoolSize(maxPoolSize)
@@ -118,7 +120,7 @@ public class Main {
         }
 
         for (final int maxPoolSize : sizes) { //test select tiny, update tiny:
-            if (runAllTests) {
+            if (!insertOnly) {
                 runTest(new TestConfig.Builder()
                                 .setDatabaseType(databaseType)
                                 .setSharedPoolSize(maxPoolSize)
@@ -130,7 +132,7 @@ public class Main {
         }
 
         for (final int maxPoolSize : sizes) { //test select heavy, update wide:
-            if (runAllTests) {
+            if (!insertOnly) {
                 runTest(new TestConfig.Builder()
                                 .setDatabaseType(databaseType)
                                 .setSharedPoolSize(maxPoolSize)
@@ -142,7 +144,7 @@ public class Main {
         }
 
         for (final int maxPoolSize : sizes) { //test insert, update, select:
-            if (runAllTests) {
+            if (!insertOnly) {
                 final int writePoolSize = Math.max(1, maxPoolSize / 2);
                 runTest(new TestConfig.Builder()
                                 .setDatabaseType(databaseType)
@@ -304,9 +306,6 @@ public class Main {
     }
 
     private static void runTest(final TestConfig config) throws InterruptedException, IOException {
-        if (!javaWarmed){
-            Thread.sleep(5000);
-        }
         try {
             runTestImpl(config);
         } catch (final Exception oops) {
@@ -316,10 +315,13 @@ public class Main {
 
 
     private static void runTestImpl(final TestConfig config) throws InterruptedException, IOException {
-        final String testName = config.toString();
+        final String testName = config.toString()+(yield?"yield=1":"");
         final File csvFile = new File(String.format("data/%s/%s/%s.csv", config.getDatabaseType(), host, config.toString()));
         if (csvFile.exists()) {
             return;
+        }
+        if (javaWarmed){
+            Thread.sleep(5000);
         }
 
 
@@ -354,6 +356,9 @@ public class Main {
                         successCounter.incrementAndGet();
                     } else {
                         failuresCounter.incrementAndGet();
+                    }
+                    if (yield){
+                        yield();
                     }
                 }
             }
