@@ -321,7 +321,7 @@ public class Main {
             return;
         }
         if (javaWarmed){
-            Thread.sleep(5000);
+            Thread.sleep(Long.parseLong(System.getProperty("free.time","5000")));
         }
 
 
