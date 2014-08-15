@@ -3,9 +3,9 @@
 import os;
 import math;
 
-# os.chdir('data/postgres/linux.env')
-os.chdir('data/mysql/linux.env')
-# os.chdir('data/mongo/linux.env')
+# os.chdir('../data/postgres/linux.env')
+os.chdir('../data/mysql/linux.env')
+# os.chdir('../data/mongo/linux.env')
 
 col_time = 0;
 col_read_ops = 1
@@ -112,25 +112,6 @@ def draw_chart(columns, name='', notes=''):
 
 
 charts = []
-
-
-def draw_aggregated_chart(name, columns, read_from=0, read_to=0, write_from=0, write_to=0):
-    read_chart = []
-    for file_csv in os.listdir('.'):
-        if file_csv.endswith('.csv'):
-            items = file_csv.replace('=', '_').replace('.', '_').split('_');
-            read_threads = int(items[4]);
-            write_threads = int(items[6]);
-            if read_from <= read_threads <= read_to and write_from <= write_threads <= write_to:
-                chart = read_chart_data(file_csv);
-                if len(read_chart) == 0:
-                    read_chart = [[t] for t in extract_column(chart, col_time)];
-                for column in columns:
-                    column_data = extract_column(chart, column)
-                    if sum(column_data[1:]) == 0.0:
-                        continue;
-                    read_chart = append_column(read_chart, column_data);
-    return draw_chart(read_chart, name);
 
 
 def meta_column(columns, title, metric):
