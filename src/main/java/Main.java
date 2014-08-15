@@ -315,7 +315,7 @@ public class Main {
 
 
     private static void runTestImpl(final TestConfig config) throws InterruptedException, IOException {
-        final String testName = config.toString()+(yield?"yield=1":"");
+        final String testName = config.toString()+(yield?",yield=1":"");
         final File csvFile = new File(String.format("data/%s/%s/%s.csv", config.getDatabaseType(), host, config.toString()));
         if (csvFile.exists()) {
             return;
