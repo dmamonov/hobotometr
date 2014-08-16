@@ -40,13 +40,14 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 public class Main {
     private static final String host = System.getProperty("host", "localhost");
     private static final boolean yield = System.getProperties().containsKey("yield");
+    private static final boolean insertOnly = Boolean.parseBoolean(System.getProperty("insert.only", "false"));
 
     public static void main(final String[] args) throws InterruptedException, IOException {
         final int[] sizes = new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 20, 24, 28, 32, 48, 64, 96, 128, 192, 256};
         for(final int size:sizes) {
             for(final DatabaseType databaseType: new DatabaseType[]{DatabaseType.postgres, DatabaseType.mysql, DatabaseType.mongo}) {
                 if (System.getProperties().containsKey(databaseType.name())) {
-                    runTestSuite(databaseType, new int[]{size}, Boolean.parseBoolean(System.getProperty("insert.only","false")));
+                    runTestSuite(databaseType, new int[]{size}, insertOnly);
                 }
             }
         }
@@ -807,7 +808,9 @@ public class Main {
         }
 
         public void reset() {
-            checkState(idFile.delete(), "Failed to delete id file: %s", idFile);
+            if (idFile.exists()) {
+                checkState(idFile.delete(), "Failed to delete id file: %s", idFile);
+            }
         }
     }
 }

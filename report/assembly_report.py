@@ -3,10 +3,6 @@
 import os;
 import math;
 
-# os.chdir('../data/postgres/linux.env')
-os.chdir('../data/mysql/linux.env')
-# os.chdir('../data/mongo/linux.env')
-
 col_time = 0;
 col_read_ops = 1
 col_read_err = 2
@@ -111,68 +107,105 @@ def draw_chart(columns, name='', notes=''):
     return id, result
 
 
-charts = []
-
-
 def meta_column(columns, title, metric):
     return ColumnData(None, title, [metric(c) for c in columns])
 
-def render_group(time_line, group_list, meta_prefix, threads_metric):
-    global c
-    charts.append(draw_chart([time_line] + [c.write_ops for c in group_list]));
-    charts.append(draw_chart([time_line.aggregate(10)] + [c.write_ops.aggregate(10) for c in group_list]));
+
+charts = []
+
+
+def render_group(time_line, group_list, meta_prefix, y_metric, threads_metric):
+    global charts;
+    charts.append(draw_chart([time_line] + [y_metric(c) for c in group_list]));
+    charts.append(draw_chart([time_line.aggregate(10)] + [y_metric(c).aggregate(10) for c in group_list]));
     charts.append(draw_chart([
-        meta_column([c.write_ops for c in group_list], meta_prefix + ' Threads', threads_metric),
-        meta_column([c.write_ops for c in group_list], meta_prefix + ' ops avg', lambda c: c.avg),
-        meta_column([c.write_ops for c in group_list], meta_prefix + ' ops sd', lambda c: c.sd),
+        meta_column([y_metric(c) for c in group_list], meta_prefix + ' Threads', threads_metric),
+        meta_column([y_metric(c) for c in group_list], meta_prefix + ' ops avg', lambda c: c.avg),
+        meta_column([y_metric(c) for c in group_list], meta_prefix + ' ops sd', lambda c: c.sd),
+    ]));
+    charts.append(draw_chart([
+        meta_column([y_metric(c) for c in group_list], meta_prefix + ' Threads', threads_metric),
+        meta_column([y_metric(c) for c in group_list], meta_prefix + ' ops sd %', lambda c: c.sd/max(c.avg, 1)*100.0),
+    ]));
+    charts.append(draw_chart([
+        meta_column([y_metric(c) for c in group_list], meta_prefix + ' Threads', threads_metric),
+        meta_column([y_metric(c) for c in group_list], meta_prefix + ' ops avg', lambda c: c.avg),
+        meta_column([y_metric(c) for c in group_list], meta_prefix + ' ops avg-sd*2', lambda c: c.avg-c.sd*2),
+        meta_column([y_metric(c) for c in group_list], meta_prefix + ' ops avg+sd*2', lambda c: c.avg+c.sd*2),
     ]));
 
 
-if True:
+def prepare_charts():
     chart_list = []
     for file_name in os.listdir('.'):
         if file_name.endswith('.csv'):
             chart_list.append(ChartData(file_name));
 
-    chart_ins_list = [c for c in chart_list if c.w_ins > 0 and c.read_th==0]
-    chart_up_tiny_list = [c for c in chart_list if c.w_up_tiny > 0 and c.read_th==0]
-    chart_up_wide_list = [c for c in chart_list if c.w_up_wide > 0 and c.read_th==0]
-    chart_r_lite_list = [c for c in chart_list if c.r_lite > 0 and c.write_th==0]
-    chart_r_heavy_list = [c for c in chart_list if c.r_heavy > 0 and c.write_th==0]
+    chart_ins_list = [c for c in chart_list if c.w_ins > 0 and c.read_th == 0]
+    chart_up_tiny_list = [c for c in chart_list if c.w_up_tiny > 0 and c.read_th == 0]
+    chart_up_wide_list = [c for c in chart_list if c.w_up_wide > 0 and c.read_th == 0]
+    chart_r_lite_list = [c for c in chart_list if c.r_lite > 0 and c.write_th == 0]
+    chart_r_heavy_list = [c for c in chart_list if c.r_heavy > 0 and c.write_th == 0]
     time_line = chart_list[0].time_line
 
-    if len(chart_ins_list)>0:
-        render_group(time_line, chart_ins_list, 'Write Ins', lambda c: c.chart.write_th)
-    if len(chart_up_tiny_list)>0:
-        render_group(time_line, chart_up_tiny_list, 'Write Up Tiny', lambda c: c.chart.write_th)
-    if len(chart_up_wide_list)>0:
-        render_group(time_line, chart_up_wide_list, 'Write Up Wide', lambda c: c.chart.write_th)
+    if len(chart_ins_list) > 0:
+        render_group(time_line, chart_ins_list, 'Write Ins', lambda c: c.write_ops, lambda c: c.chart.write_th)
+    if len(chart_up_tiny_list) > 0:
+        render_group(time_line, chart_up_tiny_list, 'Write Up Tiny', lambda c: c.write_ops, lambda c: c.chart.write_th)
+    if len(chart_up_wide_list) > 0:
+        render_group(time_line, chart_up_wide_list, 'Write Up Wide', lambda c: c.write_ops, lambda c: c.chart.write_th)
 
-with open('report-all.html', 'w') as out:
-    out.write("""<html>
-    <head>
-    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
-    <script type="text/javascript">
-      google.load("visualization", "1", {packages:["corechart"]});
-      google.setOnLoadCallback(function(){
-    """);
-    for id, renderer in charts:
-        out.write("         %s();\n" % id);
-    out.write("""    
-      });
-      """);
-    for id, renderer in charts:
-        out.write(renderer);
+    if len(chart_r_lite_list) > 0:
+        render_group(time_line, chart_r_lite_list, 'Read by Id', lambda c: c.read_ops, lambda c: c.chart.read_th)
+    if len(chart_r_heavy_list) > 0:
+        render_group(time_line, chart_r_heavy_list, 'Read by Range', lambda c: c.read_ops, lambda c: c.chart.read_th)
 
-    out.write("""
-    </script>
-    </head>
-    <body>
-    """);
 
-    for id, renderer in charts:
-        out.write('     <div id="%s" style="width: 1200px; height: 400px;"></div>\n' % id)
+def save_charts():
+    with open('report-all.html', 'w') as out:
+        out.write("""<html>
+        <head>
+        <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+        <script type="text/javascript">
+          google.load("visualization", "1", {packages:["corechart"]});
+          google.setOnLoadCallback(function(){
+        """);
+        for id, renderer in charts:
+            out.write("         %s();\n" % id);
+        out.write("""
+          });
+          """);
+        for id, renderer in charts:
+            out.write(renderer);
 
-    out.write("""
-        </body>
-</html>""");
+        out.write("""
+        </script>
+        </head>
+        <body>
+        """);
+
+        for id, renderer in charts:
+            out.write('     <div id="%s" style="width: 1200px; height: 400px;"></div>\n' % id)
+
+        out.write("""
+            </body>
+    </html>""");
+
+
+os.chdir('..');
+home_dir = os.path.abspath('.');
+data_dir = './data';
+for database in os.listdir(data_dir):
+    database_dir = os.path.join(data_dir, database)
+    if not database.startswith('-') and os.path.isdir(database_dir):
+        for profile in os.listdir(database_dir):
+            profile_dir = os.path.join(database_dir, profile);
+            if os.path.isdir(profile_dir):
+                os.chdir(profile_dir);
+
+                charts = []
+                prepare_charts();
+                save_charts();
+
+                os.chdir(home_dir);
+
