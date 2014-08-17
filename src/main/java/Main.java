@@ -40,11 +40,11 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 public class Main {
     private static final String host = System.getProperty("host", "localhost");
     private static final boolean yield = System.getProperties().containsKey("yield");
-    private static final boolean insertOnlyGlobal = Boolean.parseBoolean(System.getProperty("insert.only", "false"));
+    private static final boolean insertFirst = Boolean.parseBoolean(System.getProperty("insert.first", "false"));
     private static final boolean simpleOnly = Boolean.parseBoolean(System.getProperty("simple.only", "false"));
 
     public static void main(final String[] args) throws InterruptedException, IOException {
-        rurTestSuiteHighLevel(insertOnlyGlobal);
+        rurTestSuiteHighLevel(insertFirst);
         rurTestSuiteHighLevel(false);
         System.out.println("All Done");
     }
