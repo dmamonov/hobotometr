@@ -40,9 +40,16 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 public class Main {
     private static final String host = System.getProperty("host", "localhost");
     private static final boolean yield = System.getProperties().containsKey("yield");
-    private static final boolean insertOnly = Boolean.parseBoolean(System.getProperty("insert.only", "false"));
+    private static final boolean insertOnlyGlobal = Boolean.parseBoolean(System.getProperty("insert.only", "false"));
+    private static final boolean simpleOnly = Boolean.parseBoolean(System.getProperty("simple.only", "false"));
 
     public static void main(final String[] args) throws InterruptedException, IOException {
+        rurTestSuiteHighLevel(insertOnlyGlobal);
+        rurTestSuiteHighLevel(false);
+        System.out.println("All Done");
+    }
+
+    private static void rurTestSuiteHighLevel(final boolean insertOnly) throws InterruptedException, IOException {
         final int[] sizes = new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 20, 24, 28, 32, 48, 64, 96, 128, 192, 256};
         for(final int size:sizes) {
             for(final DatabaseType databaseType: new DatabaseType[]{DatabaseType.postgres, DatabaseType.mysql, DatabaseType.mongo}) {
@@ -51,7 +58,6 @@ public class Main {
                 }
             }
         }
-        System.out.println("All Done");
     }
 
     private static void runTestSuite(final DatabaseType databaseType, final int[] sizes, final boolean insertOnly) throws InterruptedException, IOException {
@@ -108,55 +114,57 @@ public class Main {
             }
         }
 
-        for (final int maxPoolSize : sizes) { //test select tiny, insert:
-            if (!insertOnly) {
-                runTest(new TestConfig.Builder()
-                                .setDatabaseType(databaseType)
-                                .setSharedPoolSize(maxPoolSize)
-                                .setReadLiteCpuThreads(Math.max(1, maxPoolSize / 2))
-                                .setWriteInsertThreads(Math.max(1, maxPoolSize / 2))
-                                .build()
-                );
+        if (!simpleOnly) {
+            for (final int maxPoolSize : sizes) { //test select tiny, insert:
+                if (!insertOnly) {
+                    runTest(new TestConfig.Builder()
+                                    .setDatabaseType(databaseType)
+                                    .setSharedPoolSize(maxPoolSize)
+                                    .setReadLiteCpuThreads(Math.max(1, maxPoolSize / 2))
+                                    .setWriteInsertThreads(Math.max(1, maxPoolSize / 2))
+                                    .build()
+                    );
+                }
             }
-        }
 
-        for (final int maxPoolSize : sizes) { //test select tiny, update tiny:
-            if (!insertOnly) {
-                runTest(new TestConfig.Builder()
-                                .setDatabaseType(databaseType)
-                                .setSharedPoolSize(maxPoolSize)
-                                .setReadLiteCpuThreads(Math.max(1, maxPoolSize / 2))
-                                .setWriteUpdateTinyThreads(Math.max(1, maxPoolSize / 2))
-                                .build()
-                );
+            for (final int maxPoolSize : sizes) { //test select tiny, update tiny:
+                if (!insertOnly) {
+                    runTest(new TestConfig.Builder()
+                                    .setDatabaseType(databaseType)
+                                    .setSharedPoolSize(maxPoolSize)
+                                    .setReadLiteCpuThreads(Math.max(1, maxPoolSize / 2))
+                                    .setWriteUpdateTinyThreads(Math.max(1, maxPoolSize / 2))
+                                    .build()
+                    );
+                }
             }
-        }
 
-        for (final int maxPoolSize : sizes) { //test select heavy, update wide:
-            if (!insertOnly) {
-                runTest(new TestConfig.Builder()
-                                .setDatabaseType(databaseType)
-                                .setSharedPoolSize(maxPoolSize)
-                                .setReadHeavyCpuThreads(Math.max(1, maxPoolSize / 2))
-                                .setWriteUpdateWideThreads(Math.max(1, maxPoolSize / 2))
-                                .build()
-                );
+            for (final int maxPoolSize : sizes) { //test select heavy, update wide:
+                if (!insertOnly) {
+                    runTest(new TestConfig.Builder()
+                                    .setDatabaseType(databaseType)
+                                    .setSharedPoolSize(maxPoolSize)
+                                    .setReadHeavyCpuThreads(Math.max(1, maxPoolSize / 2))
+                                    .setWriteUpdateWideThreads(Math.max(1, maxPoolSize / 2))
+                                    .build()
+                    );
+                }
             }
-        }
 
-        for (final int maxPoolSize : sizes) { //test insert, update, select:
-            if (!insertOnly) {
-                final int writePoolSize = Math.max(1, maxPoolSize / 2);
-                runTest(new TestConfig.Builder()
-                                .setDatabaseType(databaseType)
-                                .setSharedPoolSize(maxPoolSize)
-                                .setWritePoolSize(writePoolSize)
-                                .setReadLiteCpuThreads(maxPoolSize)
-                                .setWriteInsertThreads(Math.max(1, writePoolSize / 3))
-                                .setWriteUpdateTinyThreads(Math.max(1, writePoolSize / 3))
-                                .setWriteUpdateTinyThreads(Math.max(1, writePoolSize / 3))
-                                .build()
-                );
+            for (final int maxPoolSize : sizes) { //test insert, update, select:
+                if (!insertOnly) {
+                    final int writePoolSize = Math.max(1, maxPoolSize / 2);
+                    runTest(new TestConfig.Builder()
+                                    .setDatabaseType(databaseType)
+                                    .setSharedPoolSize(maxPoolSize)
+                                    .setWritePoolSize(writePoolSize)
+                                    .setReadLiteCpuThreads(maxPoolSize)
+                                    .setWriteInsertThreads(Math.max(1, writePoolSize / 3))
+                                    .setWriteUpdateTinyThreads(Math.max(1, writePoolSize / 3))
+                                    .setWriteUpdateTinyThreads(Math.max(1, writePoolSize / 3))
+                                    .build()
+                    );
+                }
             }
         }
     }

@@ -18,6 +18,26 @@ class ColumnData:
         self.sum = sum(self.data)
         self.avg = self.sum / len(self.data)
         self.sd = math.sqrt(sum([math.pow(x - self.avg, 2) for x in data]) / len(self.data))
+        if self.sum<1.0:
+            self.upper_90 = self.avg+self.sd*2
+            self.lower_90 = self.avg-self.sd*2
+        else:
+            self.upper_90 = self.solve_linear(min(data), max(data),
+                                              lambda x: sum([min(x, val) for val in self.data]) / self.sum - 0.95)
+            self.lower_90 = self.solve_linear(min(data), max(data),
+                                              lambda x: sum([max(x, val) for val in self.data]) / self.sum - 0.95)
+
+
+    def solve_linear(self, a, b, fn):
+        c = (a+b)/2.0
+        if b-a<1.0:
+            return c
+        else:
+            y = fn(c)
+            if y > 0.0:
+                return self.solve_linear(a, c, fn)
+            else:
+                return self.solve_linear(c, b, fn)
 
     def aggregate(self, group_size):
         assert len(self.data) % group_size == 0
@@ -206,19 +226,29 @@ class ReportGenerator:
         self.add_chart(report, [
             meta_column([y_metric(c) for c in group_list], meta_prefix + ' Threads', threads_metric),
             meta_column([y_metric(c) for c in group_list], meta_prefix + ' ops avg', lambda c: c.avg),
-            meta_column([y_metric(c) for c in group_list], meta_prefix + ' ops sd', lambda c: c.sd),
-        ], meta_prefix+" Avg + SD")
-        self.add_chart(report, [
-            meta_column([y_metric(c) for c in group_list], meta_prefix + ' Threads', threads_metric),
-            meta_column([y_metric(c) for c in group_list], meta_prefix + ' ops sd %',
-                        lambda c: c.sd / max(c.avg, 1) * 100.0),
-        ], meta_prefix+" SD/Avg %")
+            #meta_column([y_metric(c) for c in group_list], meta_prefix + ' ops sd', lambda c: c.sd),
+            meta_column([y_metric(c) for c in group_list], meta_prefix + ' ops 90% range size', lambda c: c.upper_90-c.lower_90),
+        ], meta_prefix+" Avg + 90% Range Size")
+        if False:
+            self.add_chart(report, [
+                meta_column([y_metric(c) for c in group_list], meta_prefix + ' Threads', threads_metric),
+                meta_column([y_metric(c) for c in group_list], meta_prefix + ' ops sd %',
+                            lambda c: c.sd / max(c.avg, 1) * 100.0),
+            ], meta_prefix + " SD/Avg %")
+            self.add_chart(report, [
+                meta_column([y_metric(c) for c in group_list], meta_prefix + ' Threads', threads_metric),
+                meta_column([y_metric(c) for c in group_list], meta_prefix + ' ops avg', lambda c: c.avg),
+                meta_column([y_metric(c) for c in group_list], meta_prefix + ' ops avg-sd*2',
+                            lambda c: c.avg - c.sd * 2),
+                meta_column([y_metric(c) for c in group_list], meta_prefix + ' ops avg+sd*2',
+                            lambda c: c.avg + c.sd * 2),
+            ], meta_prefix + " Avg + 95% SD Range")
         self.add_chart(report, [
             meta_column([y_metric(c) for c in group_list], meta_prefix + ' Threads', threads_metric),
             meta_column([y_metric(c) for c in group_list], meta_prefix + ' ops avg', lambda c: c.avg),
-            meta_column([y_metric(c) for c in group_list], meta_prefix + ' ops avg-sd*2', lambda c: c.avg - c.sd * 2),
-            meta_column([y_metric(c) for c in group_list], meta_prefix + ' ops avg+sd*2', lambda c: c.avg + c.sd * 2),
-        ], meta_prefix+" Avg + 95% SD Range")
+            meta_column([y_metric(c) for c in group_list], meta_prefix + ' ops upper', lambda c: c.upper_90),
+            meta_column([y_metric(c) for c in group_list], meta_prefix + ' ops lower', lambda c: c.lower_90),
+        ], meta_prefix+" Avg + 90% Range")
 
     def prepare_charts(self):
         chart_list = []
