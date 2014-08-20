@@ -25,7 +25,7 @@ class ColumnData:
             self.upper_90 = self.solve_linear(min(data), max(data),
                                               lambda x: sum([min(x, val) for val in self.data]) / self.sum - 0.95)
             self.lower_90 = self.solve_linear(min(data), max(data),
-                                              lambda x: sum([max(x, val) for val in self.data]) / self.sum - 0.95)
+                                              lambda x: sum([min(x, val) for val in self.data]) / self.sum - 0.05)
 
 
     def solve_linear(self, a, b, fn):
@@ -149,8 +149,71 @@ class ReportGenerator:
         self.report_write = ReportView()
         self.report_read = ReportView()
 
-    def color(self, size):
-        base = [
+    def color(self, size, gradient=False):
+        gradient26= [
+            '#E50010',
+            '#E31B00',
+            '#E14700',
+            '#E07200',
+            '#DE9D00',
+            '#DDC700',
+            '#C6DB00',
+            '#9ADA00',
+            '#6FD800',
+            '#44D700',
+            '#1AD500',
+            '#00D40F',
+            '#00D238',
+            '#00D161',
+            '#00CF88',
+            '#00CEB0',
+            '#00C2CC',
+            '#0099CB',
+            '#0070C9',
+            '#0049C8',
+            '#0021C6',
+            '#0500C5',
+            '#2B00C3',
+            '#5000C2',
+            '#7500C0',
+            '#9900BF',
+        ]
+
+        gradient32 = [
+            '#E50010',
+            '#E31200',
+            '#E23600',
+            '#E15900',
+            '#E07C00',
+            '#DE9E00',
+            '#DDC000',
+            '#D6DC00',
+            '#B2DB00',
+            '#8FD900',
+            '#6CD800',
+            '#49D700',
+            '#27D600',
+            '#05D500',
+            '#00D31B',
+            '#00D23C',
+            '#00D15D',
+            '#00D07D',
+            '#00CE9D',
+            '#00CDBC',
+            '#00BDCC',
+            '#009CCB',
+            '#007BCA',
+            '#005BC8',
+            '#003BC7',
+            '#001BC6',
+            '#0300C5',
+            '#2200C3',
+            '#4100C2',
+            '#5F00C1',
+            '#7C00C0',
+            '#9900BF',
+        ]
+        base_set = [
             '#3366CC',
             '#DC3912',
             '#FF9900',
@@ -179,7 +242,8 @@ class ReportGenerator:
             '#3104B4',
             '#00FFBF',
         ]
-        return base[size % len(base)]
+        color_set = gradient26 if gradient else base_set
+        return color_set[size % len(color_set)]
 
     def draw_chart(self, columns, title):
         global div_id_sequence
@@ -195,6 +259,7 @@ class ReportGenerator:
         for i in range(len(columns[0].data)):
             result += '[%s],\n' % (', '.join([str(c.data[i]) for c in columns]))
 
+        thread_pool_sizes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 20, 24, 28, 32, 48, 64, 96, 128, 192, 256]
         result += """
         ]);
 
@@ -208,7 +273,7 @@ class ReportGenerator:
             var chart = new google.visualization.LineChart(document.getElementById('%s'));
             chart.draw(data, options);
         }
-        """ % (title, "','".join([self.color(c.chart.max_th if c.chart is not None else columns.index(c)-1) for c in columns[1:]]),div_id)
+        """ % (title, "','".join([self.color(thread_pool_sizes.index(c.chart.max_th), gradient=True) if c.chart is not None else self.color(columns.index(c)-1) for c in columns[1:]]),div_id)
 
         return ChartView(self.database, self.host, title, div_id, result)
 
@@ -311,9 +376,9 @@ def save_charts(report_view, output_html):
         for title in report_view.list_titles():
             out.write("<tr>\n")
             for profile in report_view.list_profiles():
-                out.write("  <td style='vertical-align:text-top'>\n")
-                out.write("    <p align='center'><b><i>%s</i><br/>%s</b></p>\n" % (profile, title, ))
                 chart_view = report_view.get_chart_view(profile, title)
+                out.write("  <td style='vertical-align:text-top'>\n")
+                out.write("    <p align='center'><b><i>%s<br/>%s</i><br/>%s</b></p>\n" % (chart_view.database, chart_view.host, chart_view.title, ))
                 if chart_view is not None:
                     out.write('     <div id="%s" style="width: 500; height: 300px;"></div>\n' % chart_view.div_id)
                 out.write("  </td>\n")
