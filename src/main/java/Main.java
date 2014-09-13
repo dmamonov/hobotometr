@@ -559,7 +559,7 @@ public class Main {
             @Override
             public boolean updateWideColumnById(final int rangeFrom, final int rangeTo) {
                 try {
-                    sql.update("UPDATE hikari SET title=repeat(?, 512) WHERE id=?;", String.valueOf(random.nextInt(10)), rangeFrom + (random.nextInt(rangeTo - rangeFrom)));
+                    sql.update("UPDATE hikari SET title=(repeat(?, 64) WHERE id=?;", String.format("%08d", random.nextInt(100_000_000)), rangeFrom + (random.nextInt(rangeTo - rangeFrom)));
                     return true;
                 } catch (final RuntimeException re) {
                     return false;
