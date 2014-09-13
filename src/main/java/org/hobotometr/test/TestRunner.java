@@ -146,6 +146,9 @@ public class TestRunner {
 
         final StringBuilder csv = new StringBuilder("'Time','ReadOps','ReadErr','WriteOps','WriteErr'\n");
 
+        System.gc(); //cleanup heap before test.
+        Thread.sleep(10); //wait a bit after gc.
+
         //start tracking:
         System.out.println("Start tracking ("+config.getDatabaseType()+"): " + testName);
         for (int time = 0; time < 60; time++) {
@@ -158,15 +161,26 @@ public class TestRunner {
                     }
                 }
             }
+
+
+            //reset counters before test.
+            readProgress.set(0);
+            readFailures.set(0);
+            writeProgress.set(0);
+            writeFailures.set(0);
+
+            //actual test step:
             final long secondStart = System.currentTimeMillis();
             Thread.sleep(1000);
             final double duration = (System.currentTimeMillis() - secondStart) / 1000.0;
 
+            //fetch metrics after test:
+            final int readOpsSnapshot = readProgress.get();
+            final int readErrorsSnapshot = readFailures.get();
+            final int writeOpsSnapshot = writeProgress.get();
+            final int writeErrorsSnapshot = writeFailures.get();
 
-            final int readOpsSnapshot = readProgress.getAndSet(0);
-            final int readErrorsSnapshot = readFailures.getAndSet(0);
-            final int writeOpsSnapshot = writeProgress.getAndSet(0);
-            final int writeErrorsSnapshot = writeFailures.getAndSet(0);
+            //render and print metrics:
             System.out.printf("T %4d, R %5d/%5d, W %5d/%5d, dur=%.2f, Pools(%d/%d)\n",
                     time,
                     readOpsSnapshot, readErrorsSnapshot,
