@@ -25,8 +25,10 @@ class MySql extends AbstractSqlDatabase {
                     "  title varchar(1024) NULL,\n" + //mysql TEXT is a way different to pgsql TEXT, this we use varchar here.
                     "  val INTEGER NOT NULL DEFAULT 0\n" +
                     ");");
-            sql.update("CREATE INDEX i_hikari_title ON hikari(title);");
-            sql.update("CREATE INDEX i_hikari_val ON hikari(val);");
+            if (false) { //note [DM] no additional indexed for now.
+                sql.update("CREATE INDEX i_hikari_title ON hikari(title);");
+                sql.update("CREATE INDEX i_hikari_val ON hikari(val);");
+            }
         }
     }
 }

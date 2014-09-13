@@ -25,8 +25,10 @@ class PostgreSql extends AbstractSqlDatabase {
                     "  title TEXT NULL,\n" +
                     "  val INTEGER NOT NULL DEFAULT 0\n" +
                     ");");
-            sql.update("CREATE INDEX i_hikari_title ON hikari(title);");
-            sql.update("CREATE INDEX i_hikari_val ON hikari(val);");
+            if (false) { //note [DM] no additional indexed for now.
+                sql.update("CREATE INDEX i_hikari_title ON hikari(title);");
+                sql.update("CREATE INDEX i_hikari_val ON hikari(val);");
+            }
         }
     }
 }
