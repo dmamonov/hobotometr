@@ -148,7 +148,7 @@ public class TestRunner {
         if (javaWarmed) {
             Thread.sleep(15000);
         } else {
-            System.out.println("Warm JVM");
+            System.out.println("Warm JVM (40 sec)");
             Thread.sleep(40000);
             javaWarmed = true;
         }
@@ -158,11 +158,13 @@ public class TestRunner {
         //start tracking:
         System.out.println("Start tracking ("+config.getDatabaseType()+"): " + testName);
         for (int time = 0; time < 60 * 5 / 5; time++) {
-            if (time % 10 == 0) {
-                //cleanup environment:
-                System.gc();
-                for (final AtomicInteger reset : new AtomicInteger[]{readProgress, readFailures, writeProgress, writeFailures}) {
-                    reset.set(0);
+            if (EnvSpec.forceGcDuringTest) {
+                if (time % 10 == 0) {
+                    //cleanup environment:
+                    System.gc();
+                    for (final AtomicInteger reset : new AtomicInteger[]{readProgress, readFailures, writeProgress, writeFailures}) {
+                        reset.set(0);
+                    }
                 }
             }
             final long secondStart = System.currentTimeMillis();

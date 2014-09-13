@@ -9,24 +9,14 @@ import org.springframework.jdbc.core.JdbcTemplate;
  */
 abstract class AbstractSqlDatabase extends AbstractDatabase {
     private final HikariDataSource dataSource;
-    private final JdbcTemplate sql;
+    protected final JdbcTemplate sql;
 
     protected AbstractSqlDatabase(final HikariDataSource dataSource) {
         this.dataSource = dataSource;
         this.sql = new JdbcTemplate(dataSource);
     }
 
-    @Override
-    public void init() {
-        sql.update("" +
-                "CREATE TABLE IF NOT EXISTS hikari (\n" +
-                "  id SERIAL NOT NULL PRIMARY KEY,\n" +
-                "  title TEXT NULL,\n" +
-                "  val INTEGER NOT NULL DEFAULT 0\n" +
-                ");");
-        sql.update("CREATE INDEX IF NOT EXISTS i_hikari_title ON hikari(title);");
-        sql.update("CREATE INDEX IF NOT EXISTS i_hikari_val ON hikari(val);");
-    }
+
 
     @Override
     public boolean insert() {

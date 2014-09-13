@@ -8,57 +8,32 @@ import org.hobotometr.db.DatabaseType;
  *         Created: 2014-09-14 1:16 AM
  */
 public class TestSuiteRunner {
-    public static void runTestSuite(final DatabaseType databaseType, final ImmutableList<Integer> sizes, final boolean insertOnly)  {
+    public static void runComplexTestSuite(final DatabaseType databaseType, final ImmutableList<Integer> sizes, final boolean insertOnly)  {
         for (final int maxPoolSize : sizes) { //test inserts:
-            TestRunner.runTest(new TestSpec.Builder()
-                            .setDatabaseType(databaseType)
-                            .setSharedPoolSize(maxPoolSize)
-                            .setWriteInsertThreads(maxPoolSize)
-                            .build()
-            );
+            runInsertTest(databaseType, maxPoolSize);
         }
 
         for (final int maxPoolSize : sizes) { //test update tiny:
             if (!insertOnly) {
-                TestRunner.runTest(new TestSpec.Builder()
-                                .setDatabaseType(databaseType)
-                                .setSharedPoolSize(maxPoolSize)
-                                .setWriteUpdateTinyThreads(maxPoolSize)
-                                .build()
-                );
+                runUpdateTinyTest(databaseType, maxPoolSize);
             }
         }
 
         for (final int maxPoolSize : sizes) { //test update wide:
             if (!insertOnly) {
-                TestRunner.runTest(new TestSpec.Builder()
-                                .setDatabaseType(databaseType)
-                                .setSharedPoolSize(maxPoolSize)
-                                .setWriteUpdateWideThreads(maxPoolSize)
-                                .build()
-                );
+                runUpdateWideTest(databaseType, maxPoolSize);
             }
         }
 
         for (final int maxPoolSize : sizes) { //test select lite:
             if (!insertOnly) {
-                TestRunner.runTest(new TestSpec.Builder()
-                                .setDatabaseType(databaseType)
-                                .setSharedPoolSize(maxPoolSize)
-                                .setReadLiteCpuThreads(maxPoolSize)
-                                .build()
-                );
+                runSelecLiteTest(databaseType, maxPoolSize);
             }
         }
 
         for (final int maxPoolSize : sizes) { //test select heavy:
             if (!insertOnly) {
-                TestRunner.runTest(new TestSpec.Builder()
-                                .setDatabaseType(databaseType)
-                                .setSharedPoolSize(maxPoolSize)
-                                .setReadHeavyCpuThreads(maxPoolSize)
-                                .build()
-                );
+                runSelectHeavyTest(databaseType, maxPoolSize);
             }
         }
 
@@ -115,5 +90,50 @@ public class TestSuiteRunner {
                 }
             }
         }
+    }
+
+    private static void runSelectHeavyTest(final DatabaseType databaseType, final int maxPoolSize) {
+        TestRunner.runTest(new TestSpec.Builder()
+                        .setDatabaseType(databaseType)
+                        .setSharedPoolSize(maxPoolSize)
+                        .setReadHeavyCpuThreads(maxPoolSize)
+                        .build()
+        );
+    }
+
+    private static void runSelecLiteTest(final DatabaseType databaseType, final int maxPoolSize) {
+        TestRunner.runTest(new TestSpec.Builder()
+                        .setDatabaseType(databaseType)
+                        .setSharedPoolSize(maxPoolSize)
+                        .setReadLiteCpuThreads(maxPoolSize)
+                        .build()
+        );
+    }
+
+    private static void runUpdateWideTest(final DatabaseType databaseType, final int maxPoolSize) {
+        TestRunner.runTest(new TestSpec.Builder()
+                        .setDatabaseType(databaseType)
+                        .setSharedPoolSize(maxPoolSize)
+                        .setWriteUpdateWideThreads(maxPoolSize)
+                        .build()
+        );
+    }
+
+    private static void runUpdateTinyTest(final DatabaseType databaseType, final int maxPoolSize) {
+        TestRunner.runTest(new TestSpec.Builder()
+                        .setDatabaseType(databaseType)
+                        .setSharedPoolSize(maxPoolSize)
+                        .setWriteUpdateTinyThreads(maxPoolSize)
+                        .build()
+        );
+    }
+
+    private static void runInsertTest(final DatabaseType databaseType, final int maxPoolSize) {
+        TestRunner.runTest(new TestSpec.Builder()
+                        .setDatabaseType(databaseType)
+                        .setSharedPoolSize(maxPoolSize)
+                        .setWriteInsertThreads(maxPoolSize)
+                        .build()
+        );
     }
 }

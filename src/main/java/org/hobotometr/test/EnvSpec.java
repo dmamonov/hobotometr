@@ -5,8 +5,19 @@ package org.hobotometr.test;
  *         Created: 2014-09-14 1:15 AM
  */
 public class EnvSpec {
-    public static final String host = System.getProperty("host", "localhost");
-    public static final boolean yield = System.getProperties().containsKey("yield");
-    public static final boolean insertFirst = Boolean.parseBoolean(System.getProperty("insert.first", "false"));
-    public static final boolean simpleOnly = Boolean.parseBoolean(System.getProperty("simple.only", "false"));
+    static {
+        System.out.println("Environment configuration:");
+    }
+
+    public static final String host = getSystemProperty("host", "localhost", "host/ip address of server with configured database(es) for testing");
+    public static final boolean yield = Boolean.parseBoolean(getSystemProperty("yield", "false", "Make a Thread.yield() after each query (interesting in situation where pool=1 and consumers=2)"));
+    public static final boolean insertFirst = Boolean.parseBoolean(getSystemProperty("insert.first", "true", "Will perform data inserts tests before queries tests (required for first run)"));
+    public static final boolean simpleOnly = Boolean.parseBoolean(getSystemProperty("simple.only", "true", "Do not run composite tests where insert/update/select operations run in parallel)"));
+    public static final boolean forceGcDuringTest = Boolean.parseBoolean(getSystemProperty("gc.in.test", "false", "Invoke System.gc() each 10 seconds during test run"));
+
+    private static String getSystemProperty(final String key, final String byDefault, final String comment) {
+        final String value = System.getProperty(key, byDefault);
+        System.out.printf("  %-30s %-12s # %s\n", " -D" + key + "=" + value, (byDefault.equals(value) ? "(default)" : "(parameter)"), comment);
+        return value;
+    }
 }

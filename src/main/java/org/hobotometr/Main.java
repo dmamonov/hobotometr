@@ -20,9 +20,9 @@ public class Main {
     private static void rurTestSuiteHighLevel(final boolean insertOnly) {
         final ImmutableList<Integer> sizes = ImmutableList.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 20, 24, 28, 32, 48, 64, 96, 128, 192, 256);
         for(final int size:sizes) {
-            for(final DatabaseType databaseType: new DatabaseType[]{DatabaseType.postgres, DatabaseType.mysql, DatabaseType.mongo}) {
+            for(final DatabaseType databaseType: DatabaseType.values()) {
                 if (System.getProperties().containsKey(databaseType.name())) {
-                    TestSuiteRunner.runTestSuite(databaseType, ImmutableList.of(size), insertOnly);
+                    TestSuiteRunner.runComplexTestSuite(databaseType, ImmutableList.of(size), insertOnly);
                 }
             }
         }

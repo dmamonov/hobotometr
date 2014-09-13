@@ -4,8 +4,6 @@ import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.SimpleMongoDbFactory;
 
 import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
@@ -62,8 +60,8 @@ public enum DatabaseType {
             throw new RuntimeException("TODO [DM] not implemented yet");
         }
     };
-    private final String user;
-    private final String password;
+    protected final String user;
+    protected final String password;
 
     private DatabaseType(final String user, final String password) {
         this.user = user;
