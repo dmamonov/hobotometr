@@ -308,12 +308,17 @@ class ReportGenerator:
                 meta_column([y_metric(c) for c in group_list], meta_prefix + ' ops avg+sd*2',
                             lambda c: c.avg + c.sd * 2),
             ], meta_prefix + " Avg + 95% SD Range")
-        self.add_chart(report, [
-            meta_column([y_metric(c) for c in group_list], meta_prefix + ' Threads', threads_metric),
-            meta_column([y_metric(c) for c in group_list], meta_prefix + ' ops avg', lambda c: c.avg),
-            meta_column([y_metric(c) for c in group_list], meta_prefix + ' ops upper', lambda c: c.upper_90),
-            meta_column([y_metric(c) for c in group_list], meta_prefix + ' ops lower', lambda c: c.lower_90),
-        ], meta_prefix+" Avg + 90% Range")
+        for thread_limit in [64, 256]:
+            self.add_chart(report, [
+                meta_column([y_metric(c) for c in group_list if threads_metric(y_metric(c)) <= thread_limit],
+                            meta_prefix + ' Threads', threads_metric),
+                meta_column([y_metric(c) for c in group_list if threads_metric(y_metric(c)) <= thread_limit],
+                            meta_prefix + ' ops avg', lambda c: c.avg),
+                meta_column([y_metric(c) for c in group_list if threads_metric(y_metric(c)) <= thread_limit],
+                            meta_prefix + ' ops upper', lambda c: c.upper_90),
+                meta_column([y_metric(c) for c in group_list if threads_metric(y_metric(c)) <= thread_limit],
+                            meta_prefix + ' ops lower', lambda c: c.lower_90),
+            ], meta_prefix + (" Avg + 90%% Range 1..%03d" % thread_limit))
 
     def prepare_charts(self):
         chart_list = []
@@ -378,8 +383,8 @@ def save_charts(report_view, output_html):
             for profile in report_view.list_profiles():
                 chart_view = report_view.get_chart_view(profile, title)
                 out.write("  <td style='vertical-align:text-top'>\n")
-                out.write("    <p align='center'><b><i>%s<br/>%s</i><br/>%s</b></p>\n" % (chart_view.database, chart_view.host, chart_view.title, ))
                 if chart_view is not None:
+                    out.write("    <p align='center'><b><i>%s<br/>%s</i><br/>%s</b></p>\n" % (chart_view.database, chart_view.host, chart_view.title, ))
                     out.write('     <div id="%s" style="width: 500; height: 300px;"></div>\n' % chart_view.div_id)
                 out.write("  </td>\n")
             out.write("</tr>\n")
@@ -389,26 +394,28 @@ def save_charts(report_view, output_html):
         </body>
     </html>""")
 
+def prepare_charts():
+    os.chdir('..')
+    report_write = ReportView()
+    report_read = ReportView()
+    home_dir = os.path.abspath('.')
+    data_dir = './data'
+    for database in os.listdir(data_dir):
+        database_dir = os.path.join(data_dir, database)
+        if not database.startswith('-') and os.path.isdir(database_dir):
+            for profile in os.listdir(database_dir):
+                profile_dir = os.path.join(database_dir, profile)
+                if os.path.isdir(profile_dir):
+                    os.chdir(profile_dir)
+                    report_generator = ReportGenerator(database, profile)
+                    report_generator.generate_report_view()
 
-os.chdir('..')
-report_write = ReportView()
-report_read = ReportView()
-home_dir = os.path.abspath('.')
-data_dir = './data'
-for database in os.listdir(data_dir):
-    database_dir = os.path.join(data_dir, database)
-    if not database.startswith('-') and os.path.isdir(database_dir):
-        for profile in os.listdir(database_dir):
-            profile_dir = os.path.join(database_dir, profile)
-            if os.path.isdir(profile_dir):
-                os.chdir(profile_dir)
-                report_generator = ReportGenerator(database, profile)
-                report_generator.generate_report_view()
+                    report_write.add_report_view(report_generator.report_write)
+                    report_read.add_report_view(report_generator.report_read)
 
-                report_write.add_report_view(report_generator.report_write)
-                report_read.add_report_view(report_generator.report_read)
+                    os.chdir(home_dir)
+    return report_write, report_read
 
-                os.chdir(home_dir)
-
+(report_write, report_read) = prepare_charts()
 save_charts(report_write,'data/report-write.html')
 save_charts(report_read,'data/report-read.html')
