@@ -27,7 +27,7 @@ public class TestSuiteRunner {
 
         for (final int maxPoolSize : sizes) { //test select lite:
             if (!insertOnly) {
-                runSelecLiteTest(databaseType, maxPoolSize);
+                runSelectLiteTest(databaseType, maxPoolSize);
             }
         }
 
@@ -101,7 +101,7 @@ public class TestSuiteRunner {
         );
     }
 
-    private static void runSelecLiteTest(final DatabaseType databaseType, final int maxPoolSize) {
+    public static void runSelectLiteTest(final DatabaseType databaseType, final int maxPoolSize) {
         TestRunner.runTest(new TestSpec.Builder()
                         .setDatabaseType(databaseType)
                         .setSharedPoolSize(maxPoolSize)

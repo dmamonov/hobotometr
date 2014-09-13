@@ -13,24 +13,33 @@ import org.hobotometr.test.TestSuiteRunner;
 public class Main {
     private static final ImmutableList<Integer> sizes = ImmutableList.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 20, 24, 28, 32, 48, 64, 96, 128, 192, 256);
     public static void main(final String[] args) {
-        rurTestSuiteHighLevel(EnvSpec.insertFirst);
-        rurTestSuiteHighLevel(false);
+        final String suite = System.getProperty("suite", "complex");
+        switch (suite){
+            case "select-lite":
+                System.out.println("Run "+suite);
+                runTestSeries(TestSuiteRunner::runSelectLiteTest);
+                break;
+            default:
+                System.out.println("Run default (complex) suite:");
+                runTestSeries((databaseType, poolSize) ->  TestSuiteRunner.runComplexTestSuite(databaseType, ImmutableList.of(poolSize), EnvSpec.insertFirst));
+                runTestSeries((databaseType, poolSize) -> TestSuiteRunner.runComplexTestSuite(databaseType, ImmutableList.of(poolSize), false));
+        }
+
         System.out.println("All Done");
     }
 
-    private static void rurTestSuiteHighLevel(final boolean insertOnly) {
+    private static void runTestSeries(final TestDelegate delegate){
         for(final int size:sizes) {
             for(final DatabaseType databaseType: DatabaseType.values()) {
                 if (System.getProperties().containsKey(databaseType.name())) {
-                    TestSuiteRunner.runComplexTestSuite(databaseType, ImmutableList.of(size), insertOnly);
+                    delegate.runTest(databaseType, size);
                 }
             }
         }
     }
 
-
-
-
-
+    private interface TestDelegate {
+        void runTest(DatabaseType databaseType, int poolSize);
+    }
 }
 
