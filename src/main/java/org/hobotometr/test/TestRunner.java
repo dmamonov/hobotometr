@@ -181,7 +181,7 @@ public class TestRunner {
             final int writeErrorsSnapshot = writeFailures.get();
 
             //render and print metrics:
-            System.out.printf("T %4d, R %5d/%5d, W %5d/%5d, dur=%.2f, Pools(%d/%d)\n",
+            System.out.printf("T %4d, R %5d/%5d, W %5d/%5d, dur=%.3f, Pools(%d/%d)\n",
                     time,
                     readOpsSnapshot, readErrorsSnapshot,
                     writeOpsSnapshot, writeErrorsSnapshot,
