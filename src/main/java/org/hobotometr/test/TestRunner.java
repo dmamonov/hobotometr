@@ -33,7 +33,7 @@ public class TestRunner {
             return;
         }
         if (javaWarmed){
-            Thread.sleep(Long.parseLong(System.getProperty("free.time","5000")));
+            Thread.sleep(EnvSpec.freeTime);
         }
 
 

@@ -14,6 +14,7 @@ public class EnvSpec {
     public static final boolean insertFirst = Boolean.parseBoolean(getSystemProperty("insert.first", "true", "Will perform data inserts tests before queries tests (required for first run)"));
     public static final boolean simpleOnly = Boolean.parseBoolean(getSystemProperty("simple.only", "true", "Do not run composite tests where insert/update/select operations run in parallel)"));
     public static final boolean forceGcDuringTest = Boolean.parseBoolean(getSystemProperty("gc.in.test", "false", "Invoke System.gc() each 10 seconds during test run"));
+    public static final long freeTime = Long.parseLong(getSystemProperty("free.time", "5000", "Amount of Milliseconds to sleep between tests (helps to eliminate CPU overheat throttling during test)"));
 
     private static String getSystemProperty(final String key, final String byDefault, final String comment) {
         final String value = System.getProperty(key, byDefault);

@@ -13,13 +13,20 @@ class PostgreSql extends AbstractSqlDatabase {
 
     @Override
     public void init() {
-        sql.update("" +
-                "CREATE TABLE IF NOT EXISTS hikari (\n" +
-                "  id SERIAL NOT NULL PRIMARY KEY,\n" +
-                "  title TEXT NULL,\n" +
-                "  val INTEGER NOT NULL DEFAULT 0\n" +
-                ");");
-        sql.update("CREATE INDEX NOT EXISTS i_hikari_title ON hikari(title);");
-        sql.update("CREATE INDEX NOT EXISTS i_hikari_val ON hikari(val);");
+        if (0 == sql.queryForObject("" +
+                        "SELECT COUNT(*)\n" +
+                        "  FROM information_schema.tables \n" +
+                        " WHERE table_schema = 'public' \n" +
+                        "   AND table_name = 'hikari';",
+                Integer.class)) {
+            sql.update("" +
+                    "CREATE TABLE hikari (\n" +
+                    "  id SERIAL NOT NULL PRIMARY KEY,\n" +
+                    "  title TEXT NULL,\n" +
+                    "  val INTEGER NOT NULL DEFAULT 0\n" +
+                    ");");
+            sql.update("CREATE INDEX i_hikari_title ON hikari(title);");
+            sql.update("CREATE INDEX i_hikari_val ON hikari(val);");
+        }
     }
 }
