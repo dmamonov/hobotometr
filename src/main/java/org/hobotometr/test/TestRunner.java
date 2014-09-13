@@ -99,15 +99,6 @@ public class TestRunner {
             }.start();
         }
 
-        for (int i = 0; i < config.getReadLiteCpuThreads(); i++) {
-            new AbstractReadLoadThread() {
-                @Override
-                boolean perform() {
-                    return sharedTestQueries.selectCpuLite(1, config.getReadRange());
-                }
-            }.start();
-        }
-
         for (int i = 0; i < config.getReadHeavyCpuThreads(); i++) {
             new AbstractReadLoadThread() {
                 @Override

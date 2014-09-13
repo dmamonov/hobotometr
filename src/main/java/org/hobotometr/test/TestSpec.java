@@ -19,9 +19,9 @@ public class TestSpec {
     private int writeInsertThreads = 0;
     private int writeUpdateTinyThreads = 0;
     private int writeUpdateWideThreads = 0;
-    private int readRange = 100_000;
+    private int readRange = EnvSpec.readRangeDefault;
     private int readSize = 1000;
-    private int updateRange = 400_000;
+    private int updateRange = EnvSpec.updateRangeDefault;
 
     private TestSpec() {
         //note [DM] use Builder instead.
