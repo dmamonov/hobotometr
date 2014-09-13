@@ -19,8 +19,11 @@ public class TestSpec {
     private int writeInsertThreads = 0;
     private int writeUpdateTinyThreads = 0;
     private int writeUpdateWideThreads = 0;
+    @SuppressWarnings("FieldMayBeFinal")
     private int readRange = EnvSpec.readRangeDefault;
+    @SuppressWarnings("FieldMayBeFinal")
     private int readSize = 1000;
+    @SuppressWarnings("FieldMayBeFinal")
     private int updateRange = EnvSpec.updateRangeDefault;
 
     private TestSpec() {
