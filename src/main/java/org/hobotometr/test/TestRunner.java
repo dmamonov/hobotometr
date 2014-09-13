@@ -157,7 +157,7 @@ public class TestRunner {
 
         //start tracking:
         System.out.println("Start tracking ("+config.getDatabaseType()+"): " + testName);
-        for (int time = 0; time < 60 * 5 / 5; time++) {
+        for (int time = 0; time < 60; time++) {
             if (EnvSpec.forceGcDuringTest) {
                 if (time % 10 == 0) {
                     //cleanup environment:
