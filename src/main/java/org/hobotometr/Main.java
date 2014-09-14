@@ -13,6 +13,7 @@ import org.hobotometr.test.TestSuiteRunner;
 public class Main {
     private static final ImmutableList<Integer> sizes = ImmutableList.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 20, 24, 28, 32, 48, 64, 96, 128, 192, 256);
     public static void main(final String[] args) {
+        System.out.println("Suggested vm settings: -server -Xms4g -Xmx4g -XX:NewSize=3g -XX:MaxNewSize=3g -verbose:gc");
         final String suite = System.getProperty("suite", "complex");
         switch (suite){
             case "select-lite":
